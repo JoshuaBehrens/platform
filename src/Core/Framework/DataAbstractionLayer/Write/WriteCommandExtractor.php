@@ -14,6 +14,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\Required;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\Runtime;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\WriteProtected;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\ManyToOneAssociationField;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\ReferenceVersionField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\StorageAware;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\UpdatedAtField;
 use Shopware\Core\Framework\DataAbstractionLayer\MappingEntityDefinition;
@@ -128,13 +129,15 @@ class WriteCommandExtractor
                 }
 
                 $create = !$existence->exists() || $existence->childChangedToParent();
+                $isReferringTo = $field instanceof ReferenceVersionField
+                    && ($stack->has($field->getCompoundIdStorageName()) || $stack->has($field->getCompoundIdPropertyName()));
 
-                if (!$create && !$field instanceof UpdatedAtField) {
+                if (!$create && !$field instanceof UpdatedAtField && !$isReferringTo) {
                     //update statement
                     continue;
                 }
 
-                if (!$field->is(Required::class) && !$field instanceof UpdatedAtField) {
+                if (!$field->is(Required::class) && !$field instanceof UpdatedAtField && !$isReferringTo) {
                     //not required and childhood not changed
                     continue;
                 }
