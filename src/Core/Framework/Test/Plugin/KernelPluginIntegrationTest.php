@@ -10,6 +10,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\EntitySearchResult;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\Migration\MigrationCollectionLoader;
+use Shopware\Core\Framework\Migration\MigrationSourceFactory;
 use Shopware\Core\Framework\Plugin\Composer\CommandExecutor;
 use Shopware\Core\Framework\Plugin\KernelPluginLoader\DbalKernelPluginLoader;
 use Shopware\Core\Framework\Plugin\KernelPluginLoader\KernelPluginLoader;
@@ -280,7 +281,10 @@ class KernelPluginIntegrationTest extends TestCase
             $this->createMock(RequirementsValidator::class),
             new MemoryCacheItemPool(),
             $container->getParameter('kernel.shopware_version'),
-            $container->get(SystemConfigService::class)
+            $container->get(SystemConfigService::class),
+            $container->get('kernel'),
+            $container->get(KernelPluginLoader::class),
+            $container->get(MigrationSourceFactory::class)
         );
     }
 

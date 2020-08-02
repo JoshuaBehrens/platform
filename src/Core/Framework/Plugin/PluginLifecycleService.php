@@ -11,7 +11,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\EntitySearchResult;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\Framework\Migration\MigrationCollection;
 use Shopware\Core\Framework\Migration\MigrationCollectionLoader;
-use Shopware\Core\Framework\Migration\MigrationSource;
+use Shopware\Core\Framework\Migration\MigrationSourceFactory;
 use Shopware\Core\Framework\Plugin;
 use Shopware\Core\Framework\Plugin\Composer\CommandExecutor;
 use Shopware\Core\Framework\Plugin\Context\ActivateContext;
@@ -102,6 +102,16 @@ class PluginLifecycleService
      */
     private $systemConfigService;
 
+    /**
+     * @var KernelPluginLoader
+     */
+    private $kernelPluginLoader;
+
+    /**
+     * @var MigrationSourceFactory
+     */
+    private $migrationSourceFactory;
+
     public function __construct(
         EntityRepositoryInterface $pluginRepo,
         EventDispatcherInterface $eventDispatcher,
@@ -113,7 +123,9 @@ class PluginLifecycleService
         RequirementsValidator $requirementValidator,
         CacheItemPoolInterface $restartSignalCachePool,
         string $shopwareVersion,
-        SystemConfigService $systemConfigService
+        SystemConfigService $systemConfigService,
+        KernelPluginLoader $kernelPluginLoader,
+        MigrationSourceFactory $migrationSourceFactory
     ) {
         $this->pluginRepo = $pluginRepo;
         $this->eventDispatcher = $eventDispatcher;
@@ -126,6 +138,8 @@ class PluginLifecycleService
         $this->systemConfigService = $systemConfigService;
         $this->shopwareVersion = $shopwareVersion;
         $this->restartSignalCachePool = $restartSignalCachePool;
+        $this->kernelPluginLoader = $kernelPluginLoader;
+        $this->migrationSourceFactory = $migrationSourceFactory;
     }
 
     /**
@@ -460,23 +474,13 @@ class PluginLifecycleService
 
     private function createMigrationCollection(Plugin $pluginBaseClass): MigrationCollection
     {
-        $migrationPath = str_replace(
-            '\\',
-            '/',
-            $pluginBaseClass->getPath() . str_replace(
-                $pluginBaseClass->getNamespace(),
-                '',
-                $pluginBaseClass->getMigrationNamespace()
-            )
-        );
+        $migrationSource = $this->migrationSourceFactory->create($pluginBaseClass);
 
-        if (!is_dir($migrationPath)) {
+        if (count($migrationSource->getSourceDirectories()) === 0) {
             return $this->migrationLoader->collect('null');
         }
 
-        $this->migrationLoader->addSource(new MigrationSource($pluginBaseClass->getName(), [
-            $migrationPath => $pluginBaseClass->getMigrationNamespace(),
-        ]));
+        $this->migrationLoader->addSource($migrationSource);
 
         $collection = $this->migrationLoader
             ->collect($pluginBaseClass->getName());
@@ -510,10 +514,7 @@ class PluginLifecycleService
         /** @var Kernel $kernel */
         $kernel = $this->container->get('kernel');
 
-        /** @var KernelPluginLoader $pluginLoader */
-        $pluginLoader = $this->container->get(KernelPluginLoader::class);
-
-        $plugins = $pluginLoader->getPluginInfos();
+        $plugins = $this->kernelPluginLoader->getPluginInfos();
         foreach ($plugins as $i => $pluginData) {
             if ($pluginData['baseClass'] === $plugin->getBaseClass()) {
                 $plugins[$i]['active'] = $plugin->getActive();
@@ -526,8 +527,8 @@ class PluginLifecycleService
          * All other Requests wont have this plugin active until its updated in the db
          */
         $tmpStaticPluginLoader = new StaticKernelPluginLoader(
-            $pluginLoader->getClassLoader(),
-            $kernel->getContainer()->getParameter('kernel.plugin_dir'),
+            $this->kernelPluginLoader->getClassLoader(),
+            $this->container->getParameter('kernel.plugin_dir'),
             $plugins
         );
         $kernel->reboot(null, $tmpStaticPluginLoader);

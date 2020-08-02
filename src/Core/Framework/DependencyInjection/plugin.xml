@@ -61,6 +61,8 @@
             <argument type="service" id="cache.messenger.restart_workers_signal" />
             <argument>%kernel.shopware_version%</argument>
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
+            <argument type="service" id="Shopware\Core\Framework\Plugin\KernelPluginLoader\KernelPluginLoader"/>
+            <argument type="service" id="Shopware\Core\Framework\Migration\MigrationSourceFactory"/>
         </service>
 
         <service id="Shopware\Core\Framework\Plugin\Changelog\ChangelogParser"/>

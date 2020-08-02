@@ -4,6 +4,7 @@ namespace Shopware\Core\Framework\Plugin\KernelPluginLoader;
 
 use Composer\Autoload\ClassLoader;
 use Composer\Autoload\ClassMapGenerator;
+use Shopware\Core\Framework\Bundle as ShopwareBundle;
 use Shopware\Core\Framework\Parameter\AdditionalBundleParameters;
 use Shopware\Core\Framework\Plugin;
 use Shopware\Core\Framework\Plugin\Exception\KernelPluginLoaderException;
@@ -85,11 +86,7 @@ abstract class KernelPluginLoader extends Bundle
                 $loadedBundles[] = $plugin->getName();
             }
 
-            $copy = new KernelPluginCollection($this->getPluginInstances()->all());
-            $additionalBundleParameters = new AdditionalBundleParameters($this->classLoader, $copy, $kernelParameters);
-            $additionalBundles = $plugin->getAdditionalBundles($additionalBundleParameters);
-
-            foreach ($additionalBundles as $bundle) {
+            foreach ($this->getBundleBundles($plugin, $kernelParameters) as $bundle) {
                 if (!in_array($bundle->getName(), $loadedBundles, true)) {
                     yield $bundle;
                     $loadedBundles[] = $bundle->getName();
@@ -100,6 +97,17 @@ abstract class KernelPluginLoader extends Bundle
         if (!in_array($this->getName(), $loadedBundles, true)) {
             yield $this;
         }
+    }
+
+    /**
+     * @return Bundle[]
+     */
+    final public function getBundleBundles(ShopwareBundle $bundle, array $kernelParameters): array
+    {
+        $copy = new KernelPluginCollection($this->getPluginInstances()->all());
+        $additionalBundleParameters = new AdditionalBundleParameters($this->classLoader, $copy, $kernelParameters);
+
+        return $bundle->getAdditionalBundles($additionalBundleParameters);
     }
 
     /**

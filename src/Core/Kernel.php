@@ -215,6 +215,11 @@ class Kernel extends HttpKernel
         }
     }
 
+    public function getParameters(): array
+    {
+        return $this->getKernelParameters();
+    }
+
     protected function configureContainer(ContainerBuilder $container, LoaderInterface $loader): void
     {
         $container->setParameter('container.dumper.inline_class_loader', true);

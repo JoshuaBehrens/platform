@@ -6,6 +6,8 @@ use Shopware\Core\Framework\Adapter\Asset\AssetPackageService;
 use Shopware\Core\Framework\Adapter\Filesystem\PrefixFilesystem;
 use Shopware\Core\Framework\Event\BusinessEventRegistry;
 use Shopware\Core\Framework\Migration\MigrationSource;
+use Shopware\Core\Framework\Migration\MigrationSourceFactory;
+use Shopware\Core\Framework\Plugin\KernelPluginCollection;
 use Shopware\Core\Kernel;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Config\Loader\DelegatingLoader;
@@ -98,9 +100,13 @@ abstract class Bundle extends SymfonyBundle
             return;
         }
 
+        $container->register('shopware.bundles.' . $this->getName())
+            ->setClass(self::class)
+            ->setFactory([new Reference(KernelPluginCollection::class), 'get'])
+            ->addArgument($this->getName());
         $container->register(MigrationSource::class . '_' . $this->getName(), MigrationSource::class)
-            ->addArgument($this->getName())
-            ->addArgument([$migrationPath => $this->getMigrationNamespace()])
+            ->setFactory([new Reference(MigrationSourceFactory::class), 'create'])
+            ->addArgument([new Reference('shopware.bundles.' . $this->getName())])
             ->addTag('shopware.migration_source');
     }
 

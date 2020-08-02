@@ -10,8 +10,10 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
 use Shopware\Core\Framework\Migration\MigrationCollection;
 use Shopware\Core\Framework\Migration\MigrationCollectionLoader;
 use Shopware\Core\Framework\Migration\MigrationSource;
+use Shopware\Core\Framework\Migration\MigrationSourceFactory;
 use Shopware\Core\Framework\Plugin\Composer\CommandExecutor;
 use Shopware\Core\Framework\Plugin\KernelPluginCollection;
+use Shopware\Core\Framework\Plugin\KernelPluginLoader\KernelPluginLoader;
 use Shopware\Core\Framework\Plugin\PluginEntity;
 use Shopware\Core\Framework\Plugin\PluginLifecycleService;
 use Shopware\Core\Framework\Plugin\PluginService;
@@ -186,7 +188,10 @@ class PluginLifecycleServiceMigrationTest extends TestCase
             $this->container->get(RequirementsValidator::class),
             $this->container->get('cache.messenger.restart_workers_signal'),
             Kernel::SHOPWARE_FALLBACK_VERSION,
-            $this->container->get(SystemConfigService::class)
+            $this->container->get(SystemConfigService::class),
+            $this->container->get('kernel'),
+            $this->container->get(KernelPluginLoader::class),
+            $this->container->get(MigrationSourceFactory::class)
         );
     }
 
