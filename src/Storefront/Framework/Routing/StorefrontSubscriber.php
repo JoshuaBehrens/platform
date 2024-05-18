@@ -100,7 +100,7 @@ class StorefrontSubscriber implements EventSubscriberInterface
         }
 
         if (!$master->hasSession()) {
-            return;
+            return; // TODO hier fliege ich raus, in einem ESI Request, obwohl ich einen Context habe mit Customer im parent parent request
         }
 
         $session = $master->getSession();
