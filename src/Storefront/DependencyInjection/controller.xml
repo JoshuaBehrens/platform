@@ -220,6 +220,7 @@
         <service id="Shopware\Storefront\Controller\NavigationController">
             <argument type="service" id="Shopware\Storefront\Page\Navigation\NavigationPageLoader"/>
             <argument type="service" id="Shopware\Storefront\Pagelet\Menu\Offcanvas\MenuOffcanvasPageletLoader"/>
+            <argument type="service" id="Shopware\Storefront\Pagelet\Menu\AccountSidebar\MenuAccountSidebarPageletLoader"/>
 
             <call method="setContainer">
                 <argument type="service" id="service_container"/>

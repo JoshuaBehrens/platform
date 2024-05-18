@@ -2,7 +2,7 @@
     <div class="{% if not headerWidget %}account-aside{% else %}header-account-menu{% endif %}">
         <div class="card account-menu-inner">
             {% block page_account_sidebar_header %}
-                {% if not headerWidget %}
+                {% if not headerWidget or page.showGreeting %}
                     <div class="card-header account-aside-header">
                         {{ 'account.greetings'|trans|sw_sanitize }}
                         {{ context.customer.title }}

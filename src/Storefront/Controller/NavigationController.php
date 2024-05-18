@@ -6,6 +6,8 @@ use Shopware\Core\Framework\Log\Package;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Page\Navigation\NavigationPageLoadedHook;
 use Shopware\Storefront\Page\Navigation\NavigationPageLoaderInterface;
+use Shopware\Storefront\Pagelet\Menu\AccountSidebar\MenuAccountSidebarPageletLoadedHook;
+use Shopware\Storefront\Pagelet\Menu\AccountSidebar\MenuAccountSidebarPageletLoaderInterface;
 use Shopware\Storefront\Pagelet\Menu\Offcanvas\MenuOffcanvasPageletLoadedHook;
 use Shopware\Storefront\Pagelet\Menu\Offcanvas\MenuOffcanvasPageletLoaderInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,7 +27,8 @@ class NavigationController extends StorefrontController
      */
     public function __construct(
         private readonly NavigationPageLoaderInterface $navigationPageLoader,
-        private readonly MenuOffcanvasPageletLoaderInterface $offcanvasLoader
+        private readonly MenuOffcanvasPageletLoaderInterface $offcanvasLoader,
+        private readonly MenuAccountSidebarPageletLoaderInterface $accountSidebarPageletLoader,
     ) {
     }
 
@@ -59,6 +62,23 @@ class NavigationController extends StorefrontController
         $response = $this->renderStorefront(
             '@Storefront/storefront/layout/navigation/offcanvas/navigation-pagelet.html.twig',
             ['page' => $page]
+        );
+
+        $response->headers->set('x-robots-tag', 'noindex');
+
+        return $response;
+    }
+
+    #[Route(path: '/widgets/menu/account', name: 'frontend.menu.account', defaults: ['_httpCache' => false, '_esi' => true], methods: ['GET'])]
+    public function account(Request $request, SalesChannelContext $context): Response
+    {
+        $page = $this->accountSidebarPageletLoader->load($request, $context);
+
+        $this->hook(new MenuAccountSidebarPageletLoadedHook($page, $context));
+
+        $response = $this->renderStorefront(
+            '@Storefront/storefront/page/account/sidebar.html.twig',
+            ['page' => $page, 'headerWidget' => $page->getShowGreeting()]
         );
 
         $response->headers->set('x-robots-tag', 'noindex');
